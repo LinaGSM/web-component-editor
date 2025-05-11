@@ -1,7 +1,8 @@
 import { PIXI } from './libs/pixi.js';
+import { EDITOR_CONFIG as CONFIG } from './config/editorConfig.js';
 
-let longueurTouchesBlanches;
-
+//let longueurTouchesBlanches;
+/*
 function getStyle() {
     return new PIXI.TextStyle({
         fontSize: 24,
@@ -10,16 +11,17 @@ function getStyle() {
         wordWrapWidth: 200 // Limite la largeur du texte
     });
 }
-
+*/
 
 //Classe Note
 class Note extends PIXI.Graphics {
     dragZone = new PIXI.Graphics();
     coteSelec = false;
     color = null;
-    constructor(x, y, l, h, screen, hitArea) {
+    constructor(x, y, l, h) {
 
         super();
+
         this.color = "blue";
         this.rect(0, 1, l - 1, h - 1);
         this.fill(this.color);
@@ -27,18 +29,13 @@ class Note extends PIXI.Graphics {
 
         this.interactive = true;
         this.eventMode = 'static';
-        this.hitArea = this.hitArea;
+        //this.hitArea = hitArea;
 
         this.cursor = 'pointer';
 
         this.creeDragZone(x, y, l, h);
 
         this.interactive = true;
-        //maRegion.push(this);
-
-        //worldContainer.addChild(this);
-        //worldContainer.addChild(this.dragZone);
-        //this.on('pointerdown', this.onDragStart);
     }
 
     //Zone Créée 
@@ -51,23 +48,13 @@ class Note extends PIXI.Graphics {
         this.dragZone.y = noteY;
         this.dragZone.interactive = true;
         this.dragZone.cursor = "ew-resize"; // Curseur de redimensionnement
-        
+
     }
 }
 
-
-///////////////////////////////////////////
-// Fonctions pour la création d'une note //
-///////////////////////////////////////////
-
-
-
-
+/*
 // Classe editor (WebComponent)
 export default class Editor extends HTMLElement {
-
-    
-
     app = new PIXI.Application();
     worldContainer = new PIXI.Container({
         isRenderGroup: true,
@@ -90,15 +77,6 @@ export default class Editor extends HTMLElement {
 
     maxHorizontal = 100;
     maxVertical = 100;
-
-    // Variables pour la détection du double-clic
-    lastClickTime = 0; // Temps du dernier clic
-    //doubleClickInterval = 300; // Intervalle en millisecondes pour considérer un double-clic
-
-
-    pianoContainer = new PIXI.Container({
-        isRenderGroup: true,
-    });
 
     constructor() {
         super();
@@ -129,7 +107,7 @@ export default class Editor extends HTMLElement {
         this.app.stage.addChild(this.worldContainer);
         this.app.stage.addChild(this.pianoContainer);
 
-        this.hitArea = new PIXI.Rectangle(0, 0, /*this.app.screen.width*/ this.worldWidth, /*this.app.screen.height*/ this.worldHeight);
+        this.hitArea = new PIXI.Rectangle(0, 0, this.worldWidth, this.worldHeight);
 
 
         this.app.stage.interactive = true;
@@ -162,16 +140,120 @@ export default class Editor extends HTMLElement {
             this.pianoContainer.y += (-targetY - this.pianoContainer.y);
         });
 
-        this.note = new Note(100, 100, this.cellSizeLARGEUR, this.cellSizeHAUTEUR, this.app.screen, this.worldContainer);
-        this.note.interactive = true;
-
-        this.drawPiano();
-        this.drawGrid();
-        this.drawCurseur();
-
     }
 
 
+    scroll(x, y) {
+        this.y = y * 10;
+        this.x = x * 10;
+    }
+
+}
+*/
+
+
+export default class Editor extends HTMLElement {
+    // Propriétés privées
+    app;
+    worldContainer;
+    curseur;
+    dragTarget = null;
+    lastClickTime = 0;
+    gridSnapping = true;
+    worldWidth;
+    worldHeight;
+    longueurTouchesBlanches;
+    const1 = 0;
+    const2 = 0;
+
+    // Constantes de la grille
+    cellSizeHAUTEUR = CONFIG.GRID.CELL_HEIGHT;
+    cellSizeLARGEUR = CONFIG.GRID.CELL_WIDTH;
+    signature = CONFIG.GRID.DEFAULT_SIGNATURE;
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+
+        this.initializeProperties();
+        this.initializeApp();
+    }
+
+    initializeProperties() {
+        // Initialisation de l'application PIXI
+        this.app = new PIXI.Application();
+
+        // Initialisation des conteneurs
+        this.worldContainer = new PIXI.Container({ isRenderGroup: true });
+        this.curseur = new PIXI.Graphics();
+
+        // Initialisation des dimensions du monde
+        this.xMax = CONFIG.WORLD.MAX_HORIZONTAL * 10;
+        this.yMax = CONFIG.WORLD.MAX_VERTICAL * 10;
+
+        // Initialisation des positions
+        this.x = 0;
+        this.y = 0;
+
+        // Initialisation des dimensions de l'écran
+        this.screenWidth = CONFIG.CANVAS.WIDTH;
+        this.screenHeight = CONFIG.CANVAS.HEIGHT;
+        console.log("screenWidth: " + this.screenWidth);
+        console.log("screenHeight: " + this.screenHeight);
+
+        // Initialisation des dimensions du monde
+        this.worldWidth = (this.xMax / this.screenWidth) * CONFIG.WORLD.SIZE + this.screenWidth;
+        this.worldHeight = 128 * this.cellSizeHAUTEUR;
+
+        // Zone de hit pour les interactions
+        this.hitArea = new PIXI.Rectangle(0, 0, this.worldWidth, this.worldHeight);
+    }
+
+
+
+
+    async initializeApp() {
+        // Initialisation de PIXI
+        await this.app.init({
+            width: CONFIG.CANVAS.WIDTH,
+            height: CONFIG.CANVAS.HEIGHT
+        });
+
+        this.shadowRoot.appendChild(this.app.canvas);
+        this.app.stage.interactive = true;
+        this.app.stage.eventMode = 'static';
+
+        this.setupContainers();
+        //this.setupScroll();
+        this.drawGrid();
+        this.drawCurseur();
+        this.setupEventListeners();
+
+
+    }
+
+    setupContainers() {
+        this.worldContainer = new PIXI.Container({ isRenderGroup: true });
+
+        this.app.stage.addChild(this.worldContainer);
+    }
+
+    setupEventListeners() {
+        // Bind des méthodes
+        this.onDragStart = this.onDragStart.bind(this);
+        this.onDragMove = this.onDragMove.bind(this);
+        this.onDragEnd = this.onDragEnd.bind(this);
+        this.detecteDoubleClic = this.detecteDoubleClic.bind(this);
+
+        // Configuration des événements
+        this.app.stage.eventMode = 'static';
+        this.app.stage.hitArea = this.app.screen;
+        this.app.stage.on('pointertap', this.detecteDoubleClic);
+        this.app.stage.on('pointerup', this.onDragEnd);
+
+    }
+
+    // Méthodes de dessin
     drawGrid() {
         let grid = new PIXI.Graphics();
         grid.strokeStyle = "grey";
@@ -203,157 +285,50 @@ export default class Editor extends HTMLElement {
         this.worldContainer.addChild(grid);
     }
 
-    //Fonction pour dessiner un piano
-    drawPiano() {
-        let piano = new PIXI.Graphics();
-        let touchesNoires = new PIXI.Graphics();
-        let k = 0;
-
-        //entre2TouchesNoires est la hauteur d'une touche blanche située entre deux touches noires
-        let entre2TouchesNoires = 2 * this.cellSizeHAUTEUR;
-
-        longueurTouchesBlanches = 50;
-
-        let nombreOctaves = 0;
-
-        //positionToucheBlancheSuivante est la position de la prochaine touche blanche à dessiner
-        let positionToucheBlancheSuivante = 0;
-        for (let i = 0; i < 70; i++) {
-            //ici on dessine les touches blanches qui sont entre deux touches noires 
-            if (k == 1 || k == 2 || k == 5) {
-                if (k == 1) {
-                    nombreOctaves++;
-                    //console.log(" nombre d'octaves: " + nombreOctaves);
-
-                    // Créer le texte correctement
-                    let text = new PIXI.Text({ text: "C" + nombreOctaves, getStyle });
-                    text.x = (piano.width - text.width) / 2;
-                    text.y = positionToucheBlancheSuivante + (piano.height - text.height) / 2 + this.cellSizeHAUTEUR / 4;
-
-                    //console.log("text.text: " + text.text);
-
-                    // Ajouter le texte au pianoContainer
-                    this.pianoContainer.addChild(text);
-                    this.app.stage.addChild(this.pianoContainer);
-
-                }
-                piano.rect(0, positionToucheBlancheSuivante, longueurTouchesBlanches, entre2TouchesNoires);
-                positionToucheBlancheSuivante += entre2TouchesNoires;
-
-            }
-            //et ici on dessine les autres touches blanches 
-            else {
-                piano.rect(0, positionToucheBlancheSuivante, longueurTouchesBlanches, (3 / 2) * this.cellSizeHAUTEUR);
-                positionToucheBlancheSuivante += (3 / 2) * this.cellSizeHAUTEUR;
-            }
-            piano.fill("white");
-            piano.stroke({ width: 2, color: 0x000000, alpha: 1 });
-
-            //on dessine les touches noires
-            if (k != 3 && k != 6) {
-                touchesNoires.rect(0, positionToucheBlancheSuivante - (this.cellSizeHAUTEUR / 2), (2 / 3) * longueurTouchesBlanches, this.cellSizeHAUTEUR);
-                touchesNoires.fill("black");
-            }
-            k++;
-            if (k == 7) {
-                k = 0;
-            }
-
-        }
-        piano.interactive = true;
-        touchesNoires.interactive = true;
-
-        this.pianoContainer.addChild(piano);
-        this.pianoContainer.addChild(touchesNoires);
-        this.pianoContainer.addChildAt(piano, 0);
-    }
-
-    //Element Curseur
     drawCurseur() {
-        this.curseur.moveTo(longueurTouchesBlanches + 2, 1);
-        this.curseur.lineTo(longueurTouchesBlanches + 2, this.worldHeight);
+        console.log("curseur");
+
+        this.curseur.moveTo(2, 1);
+        this.curseur.lineTo(2, this.worldHeight);
         this.curseur.stroke({ color: "red" });
 
         this.curseur.interactive = true;
-        this.curseur.position.set(0, 0);
+        this.curseur.position.set(10, 0);
 
         this.worldContainer.addChild(this.curseur);
     }
 
-
-
-    //méthode pour zoomer sur la grille
-    zoom(hauteur, largeur) {
-        this.worldContainer.scale.set(hauteur, largeur);
-        this.pianoContainer.scale.set(1, largeur);
-    }
-
-    scroll(x, y) {
-        this.y = y * 10;
-        this.x = x * 10;
-    }
-
-    playCurseur() {
-        this.app.ticker.add(() => {
-            this.curseur.x += 1;
-            if (this.curseur.x > this.worldWidth) {
-                this.curseur.x = 300;
-            }
-
-        });
-    }
-    stop() {
-        this.app.ticker.stop();
-    }
-
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    //%%% Fonctions pour les évènements %%//
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    ///////////////////////////////////
-    //Fonctions pour déplacer la note//
-    ///////////////////////////////////
-
-
+    // Gestionnaires d'événements
     onDragStart(event) {
-        console.log("onDragStart");
-        // Est appelé à cette ligne là: note.on('pointerdown', onDragStart); dans onDoubleClick 
-        // lors de la création de la note
-        //this.alpha = 0.5;
-        //this.dragTarget = this;
-        event.currentTarget.alpha = 0.5;
         this.dragTarget = event.currentTarget;
-        console.log(" Detecte Evenement ");
-        this.app.stage.on('pointermove', this.onDragMove.bind(this));
+        this.dragTarget.alpha = 0.5;
+        this.app.stage.on('pointermove', this.onDragMove);
     }
 
     onDragMove(event) {
-        if (this.dragTarget) {
-            this.dragTarget.parent.toLocal(event.global, null, this.dragTarget.position);
-            this.dragTarget.dragZone.parent.toLocal(event.global, null, this.dragTarget.dragZone.position);
+        if (!this.dragTarget) return;
+        // ... code existant du déplacement ...
+        this.dragTarget.parent.toLocal(event.global, null, this.dragTarget.position);
+        this.dragTarget.dragZone.parent.toLocal(event.global, null, this.dragTarget.dragZone.position);
 
-            if (this.gridSnapping) {
-                this.dragTarget.x = Math.floor(this.dragTarget.x / this.cellSizeLARGEUR) * this.cellSizeLARGEUR;
-                this.dragTarget.y = Math.floor(this.dragTarget.y / this.cellSizeHAUTEUR) * this.cellSizeHAUTEUR;
+        if (this.gridSnapping) {
+            this.dragTarget.x = Math.floor(this.dragTarget.x / this.cellSizeLARGEUR) * this.cellSizeLARGEUR;
+            this.dragTarget.y = Math.floor(this.dragTarget.y / this.cellSizeHAUTEUR) * this.cellSizeHAUTEUR;
 
-                this.dragTarget.dragZone.x = Math.floor(this.dragTarget.dragZone.x / this.cellSizeLARGEUR) * this.cellSizeLARGEUR;
-                this.dragTarget.dragZone.y = Math.floor(this.dragTarget.dragZone.y / this.cellSizeHAUTEUR) * this.cellSizeHAUTEUR;
-            }
-            this.dragTarget.eventMode = 'static';
+            this.dragTarget.dragZone.x = Math.floor(this.dragTarget.dragZone.x / this.cellSizeLARGEUR) * this.cellSizeLARGEUR;
+            this.dragTarget.dragZone.y = Math.floor(this.dragTarget.dragZone.y / this.cellSizeHAUTEUR) * this.cellSizeHAUTEUR;
         }
+        this.dragTarget.eventMode = 'static';
     }
 
-    onDragEnd(event) {
-        if (this.dragTarget) {
-            this.app.stage.off('pointermove', this.onDragMove);
-            this.dragTarget.alpha = 1;
-            this.dragTarget = null;
-        }
+    onDragEnd() {
+        if (!this.dragTarget) return;
+        this.app.stage.off('pointermove', this.onDragMove);
+        this.dragTarget.alpha = 1;
+        this.dragTarget = null;
     }
 
 
-    // Variables pour la détection du double-clic
     detecteDoubleClic(event) {
         const currentTime = Date.now();
         let doubleClickInterval = 300; // Intervalle en millisecondes pour considérer un double-clic
@@ -368,25 +343,56 @@ export default class Editor extends HTMLElement {
         //créer une note dans la cell du double clic
         let mousePos = event.global;
 
+
         mousePos.x /= this.worldContainer.scale.x;
         mousePos.y /= this.worldContainer.scale.y;
 
+
         if (this.gridSnapping) {
+
             mousePos.x = Math.floor((mousePos.x + this.const1) / this.cellSizeLARGEUR) * this.cellSizeLARGEUR;
             mousePos.y = Math.floor((mousePos.y + this.const2) / this.cellSizeHAUTEUR) * this.cellSizeHAUTEUR;
+
         }
 
-        let note = new Note(mousePos.x, mousePos.y, this.cellSizeLARGEUR, this.cellSizeHAUTEUR, this.hitArea);
-        
+        let note = new Note(mousePos.x, mousePos.y, this.cellSizeLARGEUR, this.cellSizeHAUTEUR);
+
         this.worldContainer.addChild(note.dragZone);
         this.worldContainer.addChild(note);
 
         note.eventMode = 'static';
         note.on('pointerdown', this.onDragStart.bind(this));
-        //elementsDeEditor.push(note);
 
     }
 
+// ATTENTION: UTILISATION DE CSS //
+    // Méthodes publiques
+    zoom(hauteur, largeur) {
+        if (!this.app) return;
+        // Mise à l'échelle directe du canvas view
+        this.app.canvas.style.transform = `scale(${largeur}, ${hauteur})`;
+        this.app.canvas.style.transformOrigin = '0 0'; // Point d'origine de la transformation
+
+    }
+
+    scroll(x, y) {
+        if (!this.worldContainer) return;
+        this.y = y * 10;
+        this.x = x * 10;
+    }
+
+
+    playCurseur(isPlaying) {
+        if (!this.curseur) return;
+        // ... code existant de l'animation du curseur ...
+        this.app.ticker.add(() => {
+            this.curseur.x += 1;
+            if (this.curseur.x > this.worldWidth) {
+                this.curseur.x = 300;
+            }
+
+        });
+    }
 
 }
 

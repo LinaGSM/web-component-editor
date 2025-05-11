@@ -33,7 +33,6 @@ export default class MyEditor extends HTMLElement {
       position: sticky;
       left: 0;
       z-index: 1;
-      background-color: white;
     }
 
     #editeur {
@@ -123,7 +122,6 @@ export default class MyEditor extends HTMLElement {
 
 
       //Attention le curseur accélère à chaque play
-      if (this.isPlaying) {
         //this.editor.playCurseur(this.isPlaying);
         this.editor.app.ticker.add(() => {
           if(!this.isPlaying) return; // Si pas en mode lecture, ne rien faire
@@ -132,7 +130,7 @@ export default class MyEditor extends HTMLElement {
             this.editor.curseur.x = 300;
           }
         });
-      } 
+      
 
       console.log("État du bouton Play:", this.isPlaying); // Debug: voir l'état dans la console
     });

@@ -1,18 +1,6 @@
 import { PIXI } from './libs/pixi.js';
 import { EDITOR_CONFIG as CONFIG } from './config/editorConfig.js';
 
-//let longueurTouchesBlanches;
-/*
-function getStyle() {
-    return new PIXI.TextStyle({
-        fontSize: 24,
-        fill: 'red',
-        wordWrap: true,
-        wordWrapWidth: 200 // Limite la largeur du texte
-    });
-}
-*/
-
 //Classe Note
 class Note extends PIXI.Graphics {
     dragZone = new PIXI.Graphics();
@@ -29,7 +17,6 @@ class Note extends PIXI.Graphics {
 
         this.interactive = true;
         this.eventMode = 'static';
-        //this.hitArea = hitArea;
 
         this.cursor = 'pointer';
 
@@ -51,105 +38,6 @@ class Note extends PIXI.Graphics {
 
     }
 }
-
-/*
-// Classe editor (WebComponent)
-export default class Editor extends HTMLElement {
-    app = new PIXI.Application();
-    worldContainer = new PIXI.Container({
-        isRenderGroup: true,
-    });
-
-    cellSizeHAUTEUR = 25;
-    cellSizeLARGEUR = 25;
-
-    gridSnapping = true;
-    dragTarget = null;
-
-    signature = [3, 4];
-
-    curseur = new PIXI.Graphics();
-
-    worldSize = 100000;
-
-    const1 = 0;
-    const2 = 0;
-
-    maxHorizontal = 100;
-    maxVertical = 100;
-
-    constructor() {
-        super();
-
-        console.log("Editor constructor");
-
-
-        this.attachShadow({ mode: 'open' });
-        this.initializeApp();
-
-        this.xMax = this.maxHorizontal * 10;
-        this.yMax = this.maxVertical * 10;
-
-        this.x = 0;
-        this.y = 0;
-        this.test = 0;
-
-    }
-
-    async initializeApp() {
-        await this.app.init({ width: 650, height: 360 });
-
-        this.screenWidth = this.app.renderer.width;
-        this.screenHeight = this.app.renderer.height;
-        this.worldWidth = (this.xMax / this.screenWidth) * this.worldSize + this.screenWidth;
-        this.worldHeight = 128 * this.cellSizeHAUTEUR;
-
-        this.app.stage.addChild(this.worldContainer);
-        this.app.stage.addChild(this.pianoContainer);
-
-        this.hitArea = new PIXI.Rectangle(0, 0, this.worldWidth, this.worldHeight);
-
-
-        this.app.stage.interactive = true;
-        this.app.stage.eventMode = 'static';
-        this.app.stage.hitArea = this.hitArea;
-
-        
-
-        this.worldContainer.interactive = true;
-        this.worldContainer.eventMode = 'static';
-        this.worldContainer.hitArea = this.hitArea;
-
-        this.app.stage.on('pointertap', this.detecteDoubleClic.bind(this));
-
-        this.app.stage.on('pointerup', this.onDragEnd.bind(this));
-
-        this.shadowRoot.appendChild(this.app.canvas);
-
-        this.app.ticker.add(() => {
-
-            const targetX = (this.x / this.screenWidth) * this.worldSize;
-            const targetY = (this.y / this.screenHeight) * this.worldSize;
-
-            this.const1 = targetX;
-            this.const2 = targetY;
-
-            this.worldContainer.x += (-targetX - this.worldContainer.x);
-            this.worldContainer.y += (-targetY - this.worldContainer.y);
-
-            this.pianoContainer.y += (-targetY - this.pianoContainer.y);
-        });
-
-    }
-
-
-    scroll(x, y) {
-        this.y = y * 10;
-        this.x = x * 10;
-    }
-
-}
-*/
 
 
 export default class Editor extends HTMLElement {
@@ -224,7 +112,6 @@ export default class Editor extends HTMLElement {
         this.app.stage.eventMode = 'static';
 
         this.setupContainers();
-        //this.setupScroll();
         this.drawGrid();
         this.drawCurseur();
         this.setupEventListeners();
@@ -267,7 +154,7 @@ export default class Editor extends HTMLElement {
         for (let col = 0; col * this.cellSizeLARGEUR <= (this.worldWidth + this.cellSizeLARGEUR); col++) {
 
             //modifie l'épaisseur de la ligne pour les mesures
-            if (col % this.signature[0] == 0) {
+            if (col % this.signature[0] == 1) {
                 grid.stroke({ color: "white", pixelLine: true });
             }
             else {
@@ -307,7 +194,6 @@ export default class Editor extends HTMLElement {
 
     onDragMove(event) {
         if (!this.dragTarget) return;
-        // ... code existant du déplacement ...
         this.dragTarget.parent.toLocal(event.global, null, this.dragTarget.position);
         this.dragTarget.dragZone.parent.toLocal(event.global, null, this.dragTarget.dragZone.position);
 
@@ -375,16 +261,8 @@ export default class Editor extends HTMLElement {
 
     }
 
-    scroll(x, y) {
-        if (!this.worldContainer) return;
-        this.y = y * 10;
-        this.x = x * 10;
-    }
-
-
     playCurseur(isPlaying) {
         if (!this.curseur) return;
-        // ... code existant de l'animation du curseur ...
         this.app.ticker.add(() => {
             this.curseur.x += 1;
             if (this.curseur.x > this.worldWidth) {

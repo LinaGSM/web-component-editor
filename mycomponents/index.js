@@ -9,15 +9,29 @@ export default class MyEditor extends HTMLElement {
     .ContainerEditeur {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      //background-color: rgba(139, 0, 139, 0.37);
-      //Ajouté pour la scrollbar
-      width: 300px; 
-      height: 200px;
+      align-items: flex-start;      
+      width: 100%; 
+      height: 500px;
       overflow-x: auto;
       overflow-y: scroll;
       border: 1px solid #ccc;
       white-space: nowrap;
+      border: 1px solid #d1d5db;
+      background-color: white;
+
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .ContainerEditeur::-webkit-scrollbar {
+      width: 8px;
+    }
+    .ContainerEditeur::-webkit-scrollbar-thumb {
+      background-color: #888;
+      border-radius: 4px;
+    }
+    .ContainerEditeur::-webkit-scrollbar-thumb:hover {
+      background-color: #555;
     }
 
     .MonEditeur {
@@ -36,7 +50,7 @@ export default class MyEditor extends HTMLElement {
     }
 
     #editeur {
-        background-color: rgba(0, 139, 2, 0.37);
+      background-color: #f0f4f8; 
   }`;
 
   html = `
@@ -56,7 +70,7 @@ export default class MyEditor extends HTMLElement {
 
   <button id="play">Play</button> 
 
-  <h1>Premier test pixi </h1>
+  <h1> WAM Editor </h1>
   
   <div class="ContainerEditeur">
     <div class="MonEditeur">
@@ -69,7 +83,7 @@ export default class MyEditor extends HTMLElement {
 
   constructor() {
     super();
-    console.log('constructor called');
+    console.log('Component constructor called');
     // initialize the shadow DOM
     this.root = this.attachShadow({ mode: 'open' });
     this.scaleXValue = 1;
@@ -112,6 +126,7 @@ export default class MyEditor extends HTMLElement {
 
     });
 
+    // Acceleration of the cursor at each play
     this.root.querySelector('#play').addEventListener('click', () => {
       // Call the function to play or perform any action when the button is clicked
       this.isPlaying = !this.isPlaying; // Bascule entre Play et Pause
@@ -132,7 +147,7 @@ export default class MyEditor extends HTMLElement {
         });
       
 
-      console.log("État du bouton Play:", this.isPlaying); // Debug: voir l'état dans la console
+      //console.log("État du bouton Play:", this.isPlaying);
     });
 
 

@@ -2,6 +2,8 @@ import { PIXI } from './libs/pixi.js';
 import { EDITOR_CONFIG as CONFIG } from './config/editorConfig.js';
 
 //Classe Note
+// in charge of creating the note as a rectangle
+// Dragzone is created to resize the note (not yet implemented)
 class Note extends PIXI.Graphics {
     dragZone = new PIXI.Graphics();
     coteSelec = false;
@@ -40,6 +42,9 @@ class Note extends PIXI.Graphics {
 }
 
 
+//Editor Class 
+// in charge of creating the grid part of the editor
+// and manage the event on it (note creation, drag and drop)
 export default class Editor extends HTMLElement {
     // Propriétés privées
     app;
@@ -86,8 +91,7 @@ export default class Editor extends HTMLElement {
         // Initialisation des dimensions de l'écran
         this.screenWidth = CONFIG.CANVAS.WIDTH;
         this.screenHeight = CONFIG.CANVAS.HEIGHT;
-        console.log("screenWidth: " + this.screenWidth);
-        console.log("screenHeight: " + this.screenHeight);
+        
 
         // Initialisation des dimensions du monde
         this.worldWidth = (this.xMax / this.screenWidth) * CONFIG.WORLD.SIZE + this.screenWidth;
@@ -173,8 +177,6 @@ export default class Editor extends HTMLElement {
     }
 
     drawCurseur() {
-        console.log("curseur");
-
         this.curseur.moveTo(2, 1);
         this.curseur.lineTo(2, this.worldHeight);
         this.curseur.stroke({ color: "red" });
@@ -217,7 +219,7 @@ export default class Editor extends HTMLElement {
 
     detecteDoubleClic(event) {
         const currentTime = Date.now();
-        let doubleClickInterval = 300; // Intervalle en millisecondes pour considérer un double-clic
+        let doubleClickInterval = 300; // Intervalle pour considérer un double-clic
         if (currentTime - this.lastClickTime < doubleClickInterval) {
             this.onDoubleClick(event); // Appelle la fonction associée au double-clic
         }
@@ -251,25 +253,13 @@ export default class Editor extends HTMLElement {
 
     }
 
-// ATTENTION: UTILISATION DE CSS //
+// UTILISATION DE CSS //
     // Méthodes publiques
     zoom(hauteur, largeur) {
         if (!this.app) return;
         // Mise à l'échelle directe du canvas view
         this.app.canvas.style.transform = `scale(${largeur}, ${hauteur})`;
         this.app.canvas.style.transformOrigin = '0 0'; // Point d'origine de la transformation
-
-    }
-
-    playCurseur(isPlaying) {
-        if (!this.curseur) return;
-        this.app.ticker.add(() => {
-            this.curseur.x += 1;
-            if (this.curseur.x > this.worldWidth) {
-                this.curseur.x = 300;
-            }
-
-        });
     }
 
 }

@@ -17,7 +17,6 @@ export default class Piano extends HTMLElement {
 
     constructor() {
         super();
-        console.log("On rentre dans le constructeur de Piano");
 
         this.attachShadow({ mode: 'open' });
         
@@ -56,8 +55,6 @@ export default class Piano extends HTMLElement {
             width: CONFIG.PIANO.WIDTH, 
             height: CONFIG.PIANO.HEIGHT 
         });
-
-        console.log("Piano app initialized");
 
         this.shadowRoot.appendChild(this.app.canvas);
         this.app.stage.interactive = true;
@@ -109,14 +106,11 @@ export default class Piano extends HTMLElement {
 
             if (k == 4) {
                     
-                    //console.log(" nombre d'octaves: " + nombreOctaves);
-
                     // Créer le texte correctement
                     let text = new PIXI.Text({ text: "C" + nombreOctaves, getStyle });
                     text.x = (clavier.width - text.width) / 2;
                     text.y = positionToucheBlancheSuivante + (clavier.height - text.height) / 2 + this.cellSizeHAUTEUR ;
 
-                    //console.log("text.text: " + text.text);
                     nombreOctaves--;
 
                     // Ajouter le texte au pianoContainer
@@ -157,16 +151,7 @@ export default class Piano extends HTMLElement {
          this.app.canvas.style.transform = `scale(1, ${hauteur})`;
         this.app.canvas.style.transformOrigin = '0 0'; // Point d'origine de la transformation
     }
-/*
-    zoom(hauteur, largeur) {
 
-        if (!this.pianoContainer) return;
-        this.pianoContainer.scale.x = 1;
-        this.pianoContainer.scale.y = hauteur;
-    }
-        //pour le scroll
-        //this.pianoContainer.y += (-targetY - this.pianoContainer.y);
-*/
 }
 
 customElements.define('canvas-piano', Piano);
